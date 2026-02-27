@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Events – Discover Famagusta</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* ─────────────────────────────────────────
+     GOOGLE SHEETS SETUP:
+     1. Create a Google Sheet with these columns in row 1:
+        id | title_en | title_tr | date | time | end_date | location_name | address | lat | lng | category | description_en | description_tr | image_url | ticket_url | is_free
+     2. File → Share → Publish to web → Sheet1 → CSV → Publish
+     3. Copy the URL and paste it into SHEET_CSV_URL below
+  ───────────────────────────────────────── */
+
+  :root {
+    --sand:    #f5ede0;
+    --cream:   #faf6f0;
+    --stone:   #c8b89a;
+    --earth:   #8b6f47;
+    --deep:    #2c1f0e;
+    --gold:    #c9922a;
+    --rust:    #a94a1f;
+    --sky:     #4a7fa5;
+    --text:    #2c1f0e;
+    --muted:   #7a6855;
+    --border:  rgba(139,111,71,0.2);
+    --card-bg: rgba(255,252,247,0.95);
+    --radius:  12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--deep);
+    padding: 28px 32px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-brand .logo-ring {
+    width: 42px; height: 42px;
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; color: var(--gold);
+  }
+
+  .header-brand h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600;
+    color: var(--sand);
+    letter-spacing: 0.04em;
+    line-height: 1.1;
+  }
+
+  .header-brand h1 span {
+    display: block;
+    font-size: 11px; font-weight: 300;
+    color: var(--stone);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-family: 'DM Sans', sans-serif;
+    margin-top: 2px;
+  }
+
+  .lang-toggle {
+    display: flex; gap: 4px;
+  }
+  .lang-btn {
+    padding: 6px 14px;
+    border: 1px solid var(--stone);
+    background: transparent;
+    color: var(--stone);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; letter-spacing: 0.1em;
+    cursor: pointer; border-radius: 20px;
+    transition: all 0.2s;
+  }
+  .lang-btn.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--deep);
+  }
+
+  /* ── HERO STRIP ── */
+  .hero-strip {
+    background: linear-gradient(135deg, var(--earth) 0%, var(--deep) 60%);
+    padding: 40px 32px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-strip::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9922a' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .hero-strip h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(28px, 5vw, 46px);
+    color: var(--sand);
+    font-weight: 400;
+    font-style: italic;
+    position: relative;
+  }
+  .hero-strip p {
+    color: var(--stone);
+    font-size: 14px;
+    margin-top: 8px;
+    max-width: 480px;
+    position: relative;
+    line-height: 1.6;
+  }
+  .hero-divider {
+    width: 60px; height: 2px;
+    background: var(--gold);
+    margin: 14px 0;
+    position: relative;
+  }
+
+  /* ── CONTROLS ── */
+  .controls {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 12px rgba(44,31,14,0.07);
+  }
+
+  .search-wrap {
+    position: relative; flex: 1; min-width: 200px;
+  }
+  .search-wrap svg {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    width: 16px; height: 16px; color: var(--muted);
+  }
+  .search-input {
+    width: 100%;
+    padding: 9px 12px 9px 36px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; color: var(--text);
+    background: var(--cream);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--gold); }
+
+  .filter-select {
+    padding: 9px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; color: var(--text);
+    background: var(--cream);
+    cursor: pointer; outline: none;
+    transition: border-color 0.2s;
+  }
+  .filter-select:focus { border-color: var(--gold); }
+
+  .results-count {
+    font-size: 12px; color: var(--muted);
+    margin-left: auto; white-space: nowrap;
+  }
+
+  /* ── CATEGORY PILLS ── */
+  .cat-pills {
+    padding: 14px 24px 0;
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .cat-pill {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 12px; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    color: var(--muted);
+  }
+  .cat-pill:hover { border-color: var(--gold); color: var(--earth); }
+  .cat-pill.active {
+    background: var(--earth);
+    border-color: var(--earth);
+    color: white;
+  }
+
+  /* ── GRID ── */
+  .events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px 24px 40px;
+  }
+
+  /* ── EVENT CARD ── */
+  .event-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.25s, box-shadow 0.25s;
+    animation: fadeUp 0.4s ease both;
+  }
+  .event-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(44,31,14,0.14);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-image {
+    width: 100%; height: 180px;
+    object-fit: cover;
+    background: var(--sand);
+    display: block;
+  }
+  .card-image-placeholder {
+    width: 100%; height: 180px;
+    background: linear-gradient(135deg, var(--sand), var(--stone));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px;
+  }
+
+  .card-body { padding: 18px 18px 14px; }
+
+  .card-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .card-cat {
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    font-weight: 500; color: var(--gold);
+  }
+
+  .card-free {
+    font-size: 10px; padding: 2px 8px;
+    background: #e8f5e9; color: #388e3c;
+    border-radius: 20px; font-weight: 500;
+  }
+
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-weight: 600;
+    color: var(--deep); line-height: 1.2;
+    margin-bottom: 10px;
+  }
+
+  .card-info {
+    display: flex; flex-direction: column; gap: 5px;
+    font-size: 13px; color: var(--muted);
+  }
+  .card-info-row {
+    display: flex; align-items: center; gap: 7px;
+  }
+  .card-info-row svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+  .card-footer {
+    padding: 10px 18px 14px;
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .btn {
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 500;
+    cursor: pointer; border: none;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: var(--earth);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--gold); }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .btn-outline:hover { border-color: var(--earth); color: var(--earth); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    background: rgba(44,31,14,0.6);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .modal-overlay.open {
+    opacity: 1; pointer-events: all;
+  }
+  .modal {
+    background: var(--cream);
+    border-radius: 16px;
+    max-width: 680px; width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: scale(0.95) translateY(20px);
+    transition: transform 0.3s;
+  }
+  .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+
+  .modal-image {
+    width: 100%; height: 240px; object-fit: cover;
+    border-radius: 16px 16px 0 0;
+  }
+  .modal-image-placeholder {
+    width: 100%; height: 180px;
+    background: linear-gradient(135deg, var(--sand), var(--stone));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 60px;
+    border-radius: 16px 16px 0 0;
+  }
+  .modal-body { padding: 28px 28px 24px; }
+  .modal-cat {
+    font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--gold); font-weight: 500; margin-bottom: 8px;
+  }
+  .modal-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 30px; font-weight: 600;
+    color: var(--deep); line-height: 1.2; margin-bottom: 16px;
+  }
+  .modal-details {
+    display: flex; flex-direction: column; gap: 8px;
+    font-size: 14px; color: var(--muted);
+    margin-bottom: 18px;
+    padding: 16px;
+    background: var(--sand);
+    border-radius: 8px;
+  }
+  .modal-detail-row { display: flex; align-items: flex-start; gap: 10px; }
+  .modal-detail-row svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; }
+  .modal-desc {
+    font-size: 14px; color: var(--text);
+    line-height: 1.7; margin-bottom: 20px;
+  }
+  .modal-map-wrap {
+    border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+    height: 220px;
+  }
+  .modal-map-wrap iframe {
+    width: 100%; height: 100%; border: none;
+  }
+  .modal-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .modal-close-btn {
+    position: absolute; /* positioned inside modal header area */
+    top: 16px; right: 16px;
+    width: 36px; height: 36px;
+    background: var(--deep); color: white;
+    border: none; border-radius: 50%;
+    cursor: pointer; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 10;
+  }
+  .modal-top { position: relative; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center; padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; color: var(--earth);
+    margin-bottom: 6px;
+  }
+
+  /* ── LOADING ── */
+  .loading {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 80px 20px; gap: 16px;
+    grid-column: 1 / -1;
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── FOOTER ── */
+  .page-footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 12px; color: var(--stone);
+    border-top: 1px solid var(--border);
+    background: var(--deep);
+  }
+  .page-footer a { color: var(--gold); text-decoration: none; }
+
+  @media (max-width: 520px) {
+    .controls { padding: 12px 16px; }
+    .events-grid { padding: 16px 16px 32px; grid-template-columns: 1fr; }
+    .cat-pills { padding: 12px 16px 0; }
+    .modal-body { padding: 20px 18px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="header">
+  <div class="header-brand">
+    <div class="logo-ring">F</div>
+    <h1>Discover Famagusta<span>Events & What's On</span></h1>
+  </div>
+  <div class="lang-toggle">
+    <button class="lang-btn active" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('tr')">TR</button>
+  </div>
+</header>
+
+<!-- ── HERO STRIP ── -->
+<div class="hero-strip">
+  <h2 id="hero-title">What's On in Famagusta</h2>
+  <div class="hero-divider"></div>
+  <p id="hero-sub">Discover festivals, concerts, cultural nights and more — in the heart of the Eastern Mediterranean.</p>
+</div>
+
+<!-- ── CONTROLS ── -->
+<div class="controls">
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input class="search-input" type="text" id="searchInput" placeholder="Search events…" oninput="filterEvents()">
+  </div>
+  <input type="date" class="filter-select" id="dateFilter" onchange="filterEvents()">
+  <span class="results-count" id="resultsCount"></span>
+</div>
+
+<!-- ── CATEGORY PILLS ── -->
+<div class="cat-pills" id="catPills"></div>
+
+<!-- ── GRID ── -->
+<div class="events-grid" id="eventsGrid">
+  <div class="loading"><div class="spinner"></div><span style="color:var(--muted);font-size:14px;" id="loadingText">Loading events…</span></div>
+</div>
+
+<!-- ── MODAL ── -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-top">
+      <button class="modal-close-btn" onclick="closeModalDirect()">✕</button>
+      <div id="modalImageWrap"></div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-cat" id="modalCat"></div>
+      <h2 class="modal-title" id="modalTitle"></h2>
+      <div class="modal-details" id="modalDetails"></div>
+      <p class="modal-desc" id="modalDesc"></p>
+      <div class="modal-map-wrap" id="modalMapWrap" style="display:none"></div>
+      <div class="modal-actions" id="modalActions"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer class="page-footer">
+  <a href="https://www.discoverfamagusta.guide" target="_blank">discoverfamagusta.guide</a> — An initiative of Famagusta Municipality
+</footer>
+
+<script>
+/* ══════════════════════════════════════════════
+   ▶ CONFIGURATION — EDIT THIS SECTION
+   ══════════════════════════════════════════════
+   After publishing your Google Sheet as CSV,
+   paste the URL below:
+*/
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQTLPW99yTGMqHbd4O8nvYOLoBgDmx-PYjWHty1obfuD7Znv7FlZ5MKglN9BZiZDxxpswxJCCnoACR6/pub?output=csv";
+
+/* ══════════════════════════════════════════════
+   TRANSLATIONS
+══════════════════════════════════════════════ */
+const T = {
+  en: {
+    heroTitle: "What's On in Famagusta",
+    heroSub: "Discover festivals, concerts, cultural nights and more — in the heart of the Eastern Mediterranean.",
+    search: "Search events…",
+    loading: "Loading events…",
+    noEvents: "No events found",
+    noEventsSub: "Try adjusting your filters or check back soon.",
+    all: "All",
+    free: "Free",
+    getTickets: "Get Tickets",
+    viewMap: "View on Map",
+    date: "Date",
+    time: "Time",
+    location: "Location",
+    results: (n) => `${n} event${n !== 1 ? 's' : ''}`,
+  },
+  tr: {
+    heroTitle: "Gazimağusa'da Neler Oluyor",
+    heroSub: "Festivaller, konserler, kültür geceleri ve daha fazlasını keşfedin — Doğu Akdeniz'in kalbinde.",
+    search: "Etkinlik ara…",
+    loading: "Etkinlikler yükleniyor…",
+    noEvents: "Etkinlik bulunamadı",
+    noEventsSub: "Filtrelerinizi ayarlamayı deneyin veya yakında tekrar kontrol edin.",
+    all: "Tümü",
+    free: "Ücretsiz",
+    getTickets: "Bilet Al",
+    viewMap: "Haritada Gör",
+    date: "Tarih",
+    time: "Saat",
+    location: "Konum",
+    results: (n) => `${n} etkinlik`,
+  }
+};
+
+const CATEGORY_ICONS = {
+  "Festivals & Fairs":  "🎪",
+  "Music & Concerts":   "🎵",
+  "Food & Drink":       "🍽️",
+  "History & Culture":  "🏛️",
+  "Sports & Outdoors":  "⚽",
+  "Nightlife":          "🌙",
+  "Family & Kids":      "👨‍👩‍👧",
+  "Art & Exhibitions":  "🎨",
+};
+
+let lang = 'en';
+let allEvents = [];
+let activeCategory = 'All';
+
+/* ══════════════════════════════════════════════
+   LANGUAGE
+══════════════════════════════════════════════ */
+function setLang(l) {
+  lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.lang-btn[onclick="setLang('${l}')"]`).classList.add('active');
+  const heroTitle = document.getElementById('hero-title');
+  const heroSub   = document.getElementById('hero-sub');
+  const searchEl  = document.getElementById('searchInput');
+  const loadingEl = document.getElementById('loadingText');
+  if (heroTitle)  heroTitle.textContent      = T[l].heroTitle;
+  if (heroSub)    heroSub.textContent        = T[l].heroSub;
+  if (searchEl)   searchEl.placeholder       = T[l].search;
+  if (loadingEl)  loadingEl.textContent      = T[l].loading;
+  renderCategoryPills();
+  filterEvents();
+}
+
+/* ══════════════════════════════════════════════
+   LOAD FROM GOOGLE SHEETS CSV
+══════════════════════════════════════════════ */
+async function loadEvents() {
+  // If no real sheet URL, load demo data
+  if (!SHEET_CSV_URL || SHEET_CSV_URL === "YOUR_GOOGLE_SHEET_CSV_URL_HERE") {
+    allEvents = getDemoEvents();
+    renderCategoryPills();
+    filterEvents();
+    return;
+  }
+  try {
+    const res = await fetch(SHEET_CSV_URL);
+    const text = await res.text();
+    allEvents = parseCSV(text);
+    renderCategoryPills();
+    filterEvents();
+  } catch(e) {
+    console.error("Could not load sheet:", e);
+    allEvents = getDemoEvents();
+    renderCategoryPills();
+    filterEvents();
+  }
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
+  return lines.slice(1).map(line => {
+    const vals = [];
+    let cur = ''; let inQuote = false;
+    for (let c of line) {
+      if (c === '"') { inQuote = !inQuote; }
+      else if (c === ',' && !inQuote) { vals.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    vals.push(cur.trim());
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (vals[i] || '').replace(/^"|"$/g, ''));
+    return obj;
+  }).filter(e => e.id && e.title_en);
+}
+
+/* ══════════════════════════════════════════════
+   DEMO EVENTS (shown when no sheet connected)
+══════════════════════════════════════════════ */
+function getDemoEvents() {
+  return [
+    {
+      id: "1",
+      title_en: "International Famagusta Culture & Arts Festival",
+      title_tr: "Uluslararası Gazimağusa Kültür ve Sanat Festivali",
+      date: "2025-09-12",
+      end_date: "2025-09-20",
+      time: "19:00",
+      location_name: "Othello Castle Square",
+      address: "Famagusta Old City, North Cyprus",
+      lat: "35.1256", lng: "33.9442",
+      category: "Festivals & Fairs",
+      description_en: "The iconic annual festival returns with world-class musicians, theater troupes, and artists from across the Mediterranean. A celebration of culture in the heart of the ancient walled city.",
+      description_tr: "İkonik yıllık festival, Akdeniz'in dört bir yanından dünya standartlarında müzisyenler, tiyatro toplulukları ve sanatçılarla geri dönüyor.",
+      image_url: "",
+      ticket_url: "",
+      is_free: "false"
+    },
+    {
+      id: "2",
+      title_en: "Sunset Jazz at the Harbour",
+      title_tr: "Limanda Gün Batımı Caz",
+      date: "2025-08-15",
+      time: "20:00",
+      location_name: "Famagusta Harbour",
+      address: "Famagusta Harbour, North Cyprus",
+      lat: "35.1230", lng: "33.9500",
+      category: "Music & Concerts",
+      description_en: "An intimate jazz evening with local and visiting musicians against the backdrop of the Mediterranean sunset. Bring a blanket and enjoy.",
+      description_tr: "Akdeniz gün batımı manzarası eşliğinde yerel ve misafir müzisyenlerle samimi bir caz akşamı.",
+      image_url: "",
+      ticket_url: "",
+      is_free: "true"
+    },
+    {
+      id: "3",
+      title_en: "Medieval Famagusta Night Walk",
+      title_tr: "Ortaçağ Gazimağusa Gece Yürüyüşü",
+      date: "2025-09-05",
+      time: "21:00",
+      location_name: "Land Gate",
+      address: "Land Gate, Old City, Famagusta",
+      lat: "35.1268", lng: "33.9403",
+      category: "History & Culture",
+      description_en: "A guided evening walk through the illuminated old city, telling stories of knights, venetian merchants, and Ottoman conquerors. History comes alive after dark.",
+      description_tr: "Aydınlatılmış eski şehir boyunca rehberli bir akşam yürüyüşü. Şövalyeler, Venedikli tüccarlar ve Osmanlı fatihlerinin hikayeleri.",
+      image_url: "",
+      ticket_url: "",
+      is_free: "false"
+    },
+    {
+      id: "4",
+      title_en: "Local Food & Craft Market",
+      title_tr: "Yerel Yiyecek ve El Sanatları Pazarı",
+      date: "2025-08-24",
+      time: "09:00",
+      location_name: "Namik Kemal Square",
+      address: "Namik Kemal Square, Famagusta",
+      lat: "35.1245", lng: "33.9430",
+      category: "Food & Drink",
+      description_en: "Taste authentic Cypriot flavors, browse local artisan goods, and soak in the buzzing atmosphere of Famagusta's best outdoor market.",
+      description_tr: "Otantik Kıbrıs lezzetlerini tadın, yerel zanaatkar ürünlere göz atın ve Gazimağusa'nın en iyi açık hava pazarının hareketli atmosferini yaşayın.",
+      image_url: "",
+      ticket_url: "",
+      is_free: "true"
+    },
+    {
+      id: "5",
+      title_en: "Beach Volleyball Tournament",
+      title_tr: "Plaj Voleybolu Turnuvası",
+      date: "2025-09-01",
+      time: "10:00",
+      location_name: "Palm Beach",
+      address: "Palm Beach, Famagusta",
+      lat: "35.1310", lng: "33.9520",
+      category: "Sports & Outdoors",
+      description_en: "Teams from across North Cyprus compete at Famagusta's most beautiful beach. Spectators welcome — free entry, food stalls on site.",
+      description_tr: "Kuzey Kıbrıs'ın dört bir yanından takımlar Gazimağusa'nın en güzel plajında yarışıyor. Seyirciler memnuniyetle karşılanır — ücretsiz giriş.",
+      image_url: "",
+      ticket_url: "",
+      is_free: "true"
+    },
+    {
+      id: "6",
+      title_en: "Contemporary Art Opening — 'Walls That Speak'",
+      title_tr: "Çağdaş Sanat Açılışı — 'Konuşan Duvarlar'",
+      date: "2025-09-18",
+      time: "18:30",
+      location_name: "Lala Mustafa Pasha Mosque Gallery",
+      address: "St. Nicholas Cathedral, Famagusta",
+      lat: "35.1254", lng: "33.9428",
+      category: "Art & Exhibitions",
+      description_en: "An exhibition of contemporary art inspired by the layers of history embedded in Famagusta's walls. Works by 12 local and international artists.",
+      description_tr: "Gazimağusa surlarına işlenmiş tarih katmanlarından ilham alan çağdaş sanat sergisi. 12 yerel ve uluslararası sanatçının eserleri.",
+      image_url: "",
+      ticket_url: "",
+      is_free: "false"
+    }
+  ];
+}
+
+/* ══════════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════════ */
+function renderCategoryPills() {
+  const cats = ['All', ...Object.keys(CATEGORY_ICONS)];
+  const t = T[lang];
+  const container = document.getElementById('catPills');
+  container.innerHTML = cats.map(c => `
+    <button class="cat-pill ${activeCategory === c ? 'active' : ''}"
+      onclick="setCategory('${c}')">
+      ${c === 'All' ? '' : (CATEGORY_ICONS[c] + ' ')}${c === 'All' ? t.all : c}
+    </button>
+  `).join('');
+}
+
+function setCategory(cat) {
+  activeCategory = cat;
+  renderCategoryPills();
+  filterEvents();
+}
+
+function filterEvents() {
+  const t = T[lang];
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const dateVal = document.getElementById('dateFilter').value;
+
+  let filtered = allEvents.filter(e => {
+    const title = (lang === 'en' ? e.title_en : e.title_tr || e.title_en).toLowerCase();
+    const desc = (lang === 'en' ? e.description_en : e.description_tr || e.description_en).toLowerCase();
+    const matchSearch = !search || title.includes(search) || desc.includes(search) || (e.location_name || '').toLowerCase().includes(search);
+    const matchCat = activeCategory === 'All' || e.category === activeCategory;
+    const matchDate = !dateVal || e.date === dateVal;
+    return matchSearch && matchCat && matchDate;
+  });
+
+  // Sort by date ascending
+  filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  document.getElementById('resultsCount').textContent = t.results(filtered.length);
+
+  const grid = document.getElementById('eventsGrid');
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">🔍</div>
+        <h3>${t.noEvents}</h3>
+        <p>${t.noEventsSub}</p>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map((e, i) => {
+    const title = lang === 'en' ? e.title_en : (e.title_tr || e.title_en);
+    const icon = CATEGORY_ICONS[e.category] || '📅';
+    const dateStr = formatDate(e.date);
+    const isFree = e.is_free === 'true' || e.is_free === 'TRUE' || e.is_free === '1';
+    const imgHtml = e.image_url
+      ? `<img class="card-image" src="${e.image_url}" alt="${title}" loading="lazy" onerror="this.style.display='none'">`
+      : `<div class="card-image-placeholder">${icon}</div>`;
+
+    return `
+      <div class="event-card" style="animation-delay:${i * 0.05}s" onclick="openModal('${e.id}')">
+        ${imgHtml}
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="card-cat">${icon} ${e.category}</span>
+            ${isFree ? `<span class="card-free">${T[lang].free}</span>` : ''}
+          </div>
+          <h3 class="card-title">${title}</h3>
+          <div class="card-info">
+            <div class="card-info-row">
+              ${calIcon()}
+              <span>${dateStr}${e.time ? ' · ' + e.time : ''}</span>
+            </div>
+            ${e.location_name ? `<div class="card-info-row">${pinIcon()}<span>${e.location_name}</span></div>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════════ */
+function openModal(id) {
+  const e = allEvents.find(ev => ev.id === id);
+  if (!e) return;
+  const t = T[lang];
+  const title = lang === 'en' ? e.title_en : (e.title_tr || e.title_en);
+  const desc = lang === 'en' ? e.description_en : (e.description_tr || e.description_en);
+  const isFree = e.is_free === 'true' || e.is_free === 'TRUE' || e.is_free === '1';
+  const icon = CATEGORY_ICONS[e.category] || '📅';
+
+  const imgWrap = document.getElementById('modalImageWrap');
+  imgWrap.innerHTML = e.image_url
+    ? `<img class="modal-image" src="${e.image_url}" alt="${title}">`
+    : `<div class="modal-image-placeholder">${icon}</div>`;
+
+  document.getElementById('modalCat').textContent = `${icon} ${e.category}`;
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalDesc').textContent = desc;
+
+  document.getElementById('modalDetails').innerHTML = `
+    <div class="modal-detail-row">${calIcon()}<span>${t.date}: <strong>${formatDate(e.date)}${e.end_date && e.end_date !== e.date ? ' – ' + formatDate(e.end_date) : ''}</strong></span></div>
+    ${e.time ? `<div class="modal-detail-row">${clockIcon()}<span>${t.time}: <strong>${e.time}</strong></span></div>` : ''}
+    ${e.location_name ? `<div class="modal-detail-row">${pinIcon()}<span>${t.location}: <strong>${e.location_name}</strong>${e.address ? '<br><span style="font-size:12px;color:var(--muted)">' + e.address + '</span>' : ''}</span></div>` : ''}
+    ${isFree ? `<div class="modal-detail-row"><span style="color:#388e3c">✓</span><span style="color:#388e3c"><strong>${t.free} Entry</strong></span></div>` : ''}
+  `;
+
+  // Map
+  const mapWrap = document.getElementById('modalMapWrap');
+  if (e.lat && e.lng) {
+    mapWrap.style.display = 'block';
+    mapWrap.innerHTML = `<iframe
+      src="https://www.google.com/maps?q=${e.lat},${e.lng}&z=15&output=embed"
+      allowfullscreen loading="lazy"></iframe>`;
+  } else {
+    mapWrap.style.display = 'none';
+  }
+
+  const actions = document.getElementById('modalActions');
+  let actHtml = '';
+  if (e.ticket_url) actHtml += `<a href="${e.ticket_url}" target="_blank"><button class="btn btn-primary">${t.getTickets}</button></a>`;
+  if (e.lat && e.lng) actHtml += `<a href="https://www.google.com/maps?q=${e.lat},${e.lng}" target="_blank"><button class="btn btn-outline">${pinIcon()} ${t.viewMap}</button></a>`;
+  actions.innerHTML = actHtml;
+
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalDirect(); });
+
+/* ══════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════ */
+function formatDate(d) {
+  if (!d) return '';
+  try {
+    return new Date(d + 'T12:00:00').toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  } catch { return d; }
+}
+
+function calIcon() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+}
+function pinIcon() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+}
+function clockIcon() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+}
+
+/* ── INIT ── */
+loadEvents();
+</script>
+</body>
+</html>
